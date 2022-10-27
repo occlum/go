@@ -217,13 +217,15 @@ func forkAndExecInChild1(argv0 *byte, argv, envv []*byte, chroot, dir *byte, att
 	// No more allocation or calls of non-assembly functions.
 	runtime_BeforeFork()
 	locked = true
+	// Replace syscall clone with vfork here, vfork needs no parameters, the giving parameters here will be ignored.
+	// vfork and exec could create a new process in occlum while clone not.
 	switch {
 	case hasRawVforkSyscall && (sys.Cloneflags&CLONE_NEWUSER == 0 && sys.Unshareflags&CLONE_NEWUSER == 0):
-		r1, err1 = rawVforkSyscall(SYS_CLONE, uintptr(SIGCHLD|CLONE_VFORK|CLONE_VM)|sys.Cloneflags)
+		r1, err1 = rawVforkSyscall(SYS_VFORK, uintptr(SIGCHLD|CLONE_VFORK|CLONE_VM)|sys.Cloneflags)
 	case runtime.GOARCH == "s390x":
-		r1, _, err1 = RawSyscall6(SYS_CLONE, 0, uintptr(SIGCHLD)|sys.Cloneflags, 0, 0, 0, 0)
+		r1, _, err1 = RawSyscall6(SYS_VFORK, 0, uintptr(SIGCHLD)|sys.Cloneflags, 0, 0, 0, 0)
 	default:
-		r1, _, err1 = RawSyscall6(SYS_CLONE, uintptr(SIGCHLD)|sys.Cloneflags, 0, 0, 0, 0, 0)
+		r1, _, err1 = RawSyscall6(SYS_VFORK, uintptr(SIGCHLD)|sys.Cloneflags, 0, 0, 0, 0, 0)
 	}
 	if err1 != 0 || r1 != 0 {
 		// If we're in the parent, we must return immediately
