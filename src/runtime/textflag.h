@@ -35,3 +35,17 @@
 // Function is the top of the call stack. Call stack unwinders should stop
 // at this function.
 #define TOPFRAME 2048
+
+// step one: assign syscall return address to register rcx, occlum know where
+//           should return according to rcx.
+// step two: jump to syscall interface address provided by occlum when go
+//           .bin file loaded.
+// <BYTE $0x48; BYTE $0x8d; BYTE $0x0d; BYTE $0x0c; BYTE $0x00; BYTE $0x00; BYTE $0x00>
+// actually is the assembler instruction: lea 0xc(%rip),%rcx
+#define SYSCALL_ENHANCE  \
+    CMPQ runtime·occlumentry(SB), $0x0  \
+    JBE  10(PC)  \
+    BYTE $0x48; BYTE $0x8d; BYTE $0x0d; BYTE $0x0c; BYTE $0x00; BYTE $0x00; BYTE $0x00  \
+    MOVQ runtime·occlumentry(SB), R11  \
+    JMP  R11  \
+    SYSCALL

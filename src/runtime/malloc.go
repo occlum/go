@@ -638,42 +638,44 @@ func (h *mheap) sysAlloc(n uintptr) (v unsafe.Pointer, size uintptr) {
 		goto mapped
 	}
 
-	// Try to grow the heap at a hint address.
-	for h.arenaHints != nil {
-		hint := h.arenaHints
-		p := hint.addr
-		if hint.down {
-			p -= n
-		}
-		if p+n < p {
-			// We can't use this, so don't ask.
-			v = nil
-		} else if arenaIndex(p+n-1) >= 1<<arenaBits {
-			// Outside addressable heap. Can't use.
-			v = nil
-		} else {
-			v = sysReserve(unsafe.Pointer(p), n)
-		}
-		if p == uintptr(v) {
-			// Success. Update the hint.
-			if !hint.down {
-				p += n
+	if occlumentry == 0 {
+		// Try to grow the heap at a hint address.
+		for h.arenaHints != nil {
+			hint := h.arenaHints
+			p := hint.addr
+			if hint.down {
+				p -= n
 			}
-			hint.addr = p
-			size = n
-			break
+			if p+n < p {
+				// We can't use this, so don't ask.
+				v = nil
+			} else if arenaIndex(p+n-1) >= 1<<arenaBits {
+				// Outside addressable heap. Can't use.
+				v = nil
+			} else {
+				v = sysReserve(unsafe.Pointer(p), n)
+			}
+			if p == uintptr(v) {
+				// Success. Update the hint.
+				if !hint.down {
+					p += n
+				}
+				hint.addr = p
+				size = n
+				break
+			}
+			// Failed. Discard this hint and try the next.
+			//
+			// TODO: This would be cleaner if sysReserve could be
+			// told to only return the requested address. In
+			// particular, this is already how Windows behaves, so
+			// it would simplify things there.
+			if v != nil {
+				sysFree(v, n, nil)
+			}
+			h.arenaHints = hint.next
+			h.arenaHintAlloc.free(unsafe.Pointer(hint))
 		}
-		// Failed. Discard this hint and try the next.
-		//
-		// TODO: This would be cleaner if sysReserve could be
-		// told to only return the requested address. In
-		// particular, this is already how Windows behaves, so
-		// it would simplify things there.
-		if v != nil {
-			sysFree(v, n, nil)
-		}
-		h.arenaHints = hint.next
-		h.arenaHintAlloc.free(unsafe.Pointer(hint))
 	}
 
 	if size == 0 {

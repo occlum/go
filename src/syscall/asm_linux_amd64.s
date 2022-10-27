@@ -22,7 +22,7 @@ TEXT ·Syscall(SB),NOSPLIT,$0-56
 	MOVQ	a2+16(FP), SI
 	MOVQ	a3+24(FP), DX
 	MOVQ	trap+0(FP), AX	// syscall entry
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok
 	MOVQ	$-1, r1+32(FP)
@@ -48,7 +48,7 @@ TEXT ·Syscall6(SB),NOSPLIT,$0-80
 	MOVQ	a5+40(FP), R8
 	MOVQ	a6+48(FP), R9
 	MOVQ	trap+0(FP), AX	// syscall entry
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok6
 	MOVQ	$-1, r1+56(FP)
@@ -70,7 +70,7 @@ TEXT ·RawSyscall(SB),NOSPLIT,$0-56
 	MOVQ	a2+16(FP), SI
 	MOVQ	a3+24(FP), DX
 	MOVQ	trap+0(FP), AX	// syscall entry
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok1
 	MOVQ	$-1, r1+32(FP)
@@ -93,7 +93,7 @@ TEXT ·RawSyscall6(SB),NOSPLIT,$0-80
 	MOVQ	a5+40(FP), R8
 	MOVQ	a6+48(FP), R9
 	MOVQ	trap+0(FP), AX	// syscall entry
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok2
 	MOVQ	$-1, r1+56(FP)
@@ -117,7 +117,7 @@ TEXT ·rawVforkSyscall(SB),NOSPLIT,$0-32
 	MOVQ	$0, R9
 	MOVQ	trap+0(FP), AX	// syscall entry
 	POPQ	R12 // preserve return address
-	SYSCALL
+	SYSCALL_ENHANCE
 	PUSHQ	R12
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok2
@@ -136,7 +136,7 @@ TEXT ·rawSyscallNoError(SB),NOSPLIT,$0-48
 	MOVQ	a2+16(FP), SI
 	MOVQ	a3+24(FP), DX
 	MOVQ	trap+0(FP), AX	// syscall entry
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVQ	AX, r1+32(FP)
 	MOVQ	DX, r2+40(FP)
 	RET
@@ -157,7 +157,7 @@ ret:
 	RET
 fallback:
 	MOVL	$SYS_gettimeofday, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	JMP ret
 ok7:
 	MOVQ	$0, err+8(FP)

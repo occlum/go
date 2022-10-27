@@ -53,7 +53,7 @@
 TEXT runtime·exit(SB),NOSPLIT,$0-4
 	MOVL	code+0(FP), DI
 	MOVL	$SYS_exit_group, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 // func exitThread(wait *uint32)
@@ -63,7 +63,7 @@ TEXT runtime·exitThread(SB),NOSPLIT,$0-8
 	MOVL	$0, (AX)
 	MOVL	$0, DI	// exit code
 	MOVL	$SYS_exit, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	// We may not even have a stack any more.
 	INT	$3
 	JMP	0(PC)
@@ -75,7 +75,7 @@ TEXT runtime·open(SB),NOSPLIT,$0-20
 	MOVL	mode+8(FP), DX
 	MOVL	perm+12(FP), R10
 	MOVL	$SYS_openat, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	2(PC)
 	MOVL	$-1, AX
@@ -85,7 +85,7 @@ TEXT runtime·open(SB),NOSPLIT,$0-20
 TEXT runtime·closefd(SB),NOSPLIT,$0-12
 	MOVL	fd+0(FP), DI
 	MOVL	$SYS_close, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	2(PC)
 	MOVL	$-1, AX
@@ -97,7 +97,7 @@ TEXT runtime·write1(SB),NOSPLIT,$0-28
 	MOVQ	p+8(FP), SI
 	MOVL	n+16(FP), DX
 	MOVL	$SYS_write, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -106,7 +106,7 @@ TEXT runtime·read(SB),NOSPLIT,$0-28
 	MOVQ	p+8(FP), SI
 	MOVL	n+16(FP), DX
 	MOVL	$SYS_read, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -114,7 +114,7 @@ TEXT runtime·read(SB),NOSPLIT,$0-28
 TEXT runtime·pipe(SB),NOSPLIT,$0-12
 	LEAQ	r+0(FP), DI
 	MOVL	$SYS_pipe, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, errno+8(FP)
 	RET
 
@@ -123,7 +123,7 @@ TEXT runtime·pipe2(SB),NOSPLIT,$0-20
 	LEAQ	r+8(FP), DI
 	MOVL	flags+0(FP), SI
 	MOVL	$SYS_pipe2, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, errno+16(FP)
 	RET
 
@@ -141,40 +141,40 @@ TEXT runtime·usleep(SB),NOSPLIT,$16
 	MOVQ	SP, DI
 	MOVL	$0, SI
 	MOVL	$SYS_nanosleep, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 TEXT runtime·gettid(SB),NOSPLIT,$0-4
 	MOVL	$SYS_gettid, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+0(FP)
 	RET
 
 TEXT runtime·raise(SB),NOSPLIT,$0
 	MOVL	$SYS_getpid, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, R12
 	MOVL	$SYS_gettid, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, SI	// arg 2 tid
 	MOVL	R12, DI	// arg 1 pid
 	MOVL	sig+0(FP), DX	// arg 3
 	MOVL	$SYS_tgkill, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 TEXT runtime·raiseproc(SB),NOSPLIT,$0
 	MOVL	$SYS_getpid, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, DI	// arg 1 pid
 	MOVL	sig+0(FP), SI	// arg 2
 	MOVL	$SYS_kill, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 TEXT ·getpid(SB),NOSPLIT,$0-8
 	MOVL	$SYS_getpid, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVQ	AX, ret+0(FP)
 	RET
 
@@ -183,7 +183,7 @@ TEXT ·tgkill(SB),NOSPLIT,$0
 	MOVQ	tid+8(FP), SI
 	MOVQ	sig+16(FP), DX
 	MOVL	$SYS_tgkill, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 TEXT runtime·setitimer(SB),NOSPLIT,$0-24
@@ -191,7 +191,7 @@ TEXT runtime·setitimer(SB),NOSPLIT,$0-24
 	MOVQ	new+8(FP), SI
 	MOVQ	old+16(FP), DX
 	MOVL	$SYS_setittimer, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 TEXT runtime·mincore(SB),NOSPLIT,$0-28
@@ -199,7 +199,7 @@ TEXT runtime·mincore(SB),NOSPLIT,$0-28
 	MOVQ	n+8(FP), SI
 	MOVQ	dst+16(FP), DX
 	MOVL	$SYS_mincore, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -266,7 +266,7 @@ ret:
 	RET
 fallback:
 	MOVQ	$SYS_clock_gettime, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	JMP ret
 
 // func nanotime1() int64
@@ -329,7 +329,7 @@ ret:
 	RET
 fallback:
 	MOVQ	$SYS_clock_gettime, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	JMP	ret
 
 TEXT runtime·rtsigprocmask(SB),NOSPLIT,$0-28
@@ -338,7 +338,7 @@ TEXT runtime·rtsigprocmask(SB),NOSPLIT,$0-28
 	MOVQ	old+16(FP), DX
 	MOVL	size+24(FP), R10
 	MOVL	$SYS_rt_sigprocmask, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	2(PC)
 	MOVL	$0xf1, 0xf1  // crash
@@ -350,7 +350,7 @@ TEXT runtime·rt_sigaction(SB),NOSPLIT,$0-36
 	MOVQ	old+16(FP), DX
 	MOVQ	size+24(FP), R10
 	MOVL	$SYS_rt_sigaction, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+32(FP)
 	RET
 
@@ -491,7 +491,7 @@ sigtrampnog:
 // Defined as ABIInternal since it does not use the stack-based Go ABI.
 TEXT runtime·sigreturn<ABIInternal>(SB),NOSPLIT,$0
 	MOVQ	$SYS_rt_sigreturn, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	INT $3	// not reached
 
 TEXT runtime·sysMmap(SB),NOSPLIT,$0
@@ -503,7 +503,7 @@ TEXT runtime·sysMmap(SB),NOSPLIT,$0
 	MOVL	off+28(FP), R9
 
 	MOVL	$SYS_mmap, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok
 	NOTQ	AX
@@ -538,7 +538,7 @@ TEXT runtime·sysMunmap(SB),NOSPLIT,$0
 	MOVQ	addr+0(FP), DI
 	MOVQ	n+8(FP), SI
 	MOVQ	$SYS_munmap, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	2(PC)
 	MOVL	$0xf1, 0xf1  // crash
@@ -562,7 +562,7 @@ TEXT runtime·madvise(SB),NOSPLIT,$0
 	MOVQ	n+8(FP), SI
 	MOVL	flags+16(FP), DX
 	MOVQ	$SYS_madvise, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -576,12 +576,15 @@ TEXT runtime·futex(SB),NOSPLIT,$0
 	MOVQ	addr2+24(FP), R8
 	MOVL	val3+32(FP), R9
 	MOVL	$SYS_futex, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+40(FP)
 	RET
 
 // int32 clone(int32 flags, void *stk, M *mp, G *gp, void (*fn)(void));
 TEXT runtime·clone(SB),NOSPLIT,$0
+    CMPQ runtime·occlumentry(SB), $0x0
+    JNE occlum
+
 	MOVL	flags+0(FP), DI
 	MOVQ	stk+8(FP), SI
 	MOVQ	$0, DX
@@ -644,11 +647,109 @@ nog2:
 	SYSCALL
 	JMP	-3(PC)	// keep exiting
 
+occlum:
+	MOVL	flags+0(FP), DI
+	MOVQ	stk+8(FP), SI
+	MOVQ	$0, DX
+	MOVQ	$0, R10
+	MOVQ    $0, R8
+	// Copy mp, gp, fn off parent stack for use by child.
+	// Careful: Linux system call clobbers CX and R11.
+	MOVQ	mp+16(FP), R13
+	MOVQ	gp+24(FP), R9
+	MOVQ	fn+32(FP), R12
+	CMPQ	R13, $0    // m
+	JEQ	occlum_nog1
+	CMPQ	R9, $0    // g
+	JEQ	occlum_nog1
+	LEAQ	m_tls(R13), R8
+#ifdef GOOS_android
+	// Android stores the TLS offset in runtime·tls_g.
+	SUBQ	runtime·tls_g(SB), R8
+#else
+	ADDQ	$8, R8	// ELF wants to use -8(FS)
+#endif
+	ORQ 	$0x00080000, DI //add flag CLONE_SETTLS(0x00080000) to call clone
+occlum_nog1:
+	// flags
+	MOVQ DI, -16(SI)
+	// fn
+	MOVQ R12, -24(SI)
+	// gp
+	MOVQ R9, -32(SI)
+	// m
+	MOVQ R13, -40(SI)
+	// lea 0x23(%rip),%rax
+	BYTE $0x48; BYTE $0x8d; BYTE $0x05; BYTE $0x23; BYTE $0x00; BYTE $0x00; BYTE $0x00
+	// thread entry point
+	MOVQ AX, -8(SI)
+
+	SUBQ $8, SI
+
+	MOVL	$SYS_clone, AX
+	// BYTE $0xcc
+	// lea 0xa(%rip),%rcx
+	BYTE $0x48; BYTE $0x8d; BYTE $0x0d; BYTE $0x0a; BYTE $0x00; BYTE $0x00; BYTE $0x00
+	MOVQ runtime·occlumentry(SB), R11
+	JMP  R11
+
+	// In parent, return.
+	MOVL	AX, ret+40(FP)
+	RET
+
+thread_entrypoint:
+	// add 8, %rsp
+	// MOVQ	SI, SP
+	ADDQ $8, SP
+
+	MOVQ SP, SI
+
+	// mov -24(%rsp), %r12
+	// fn
+	BYTE $0x4c; BYTE $0x8b; BYTE $0x64; BYTE $0x24; BYTE $0xe8
+
+	// mov -32(%rsp), %r9
+	// gp
+	BYTE $0x4c; BYTE $0x8b; BYTE $0x4c; BYTE $0x24; BYTE $0xe0
+
+	// mov -40(%rsp), %r13
+	// m
+	BYTE $0x4c; BYTE $0x8b; BYTE $0x6c; BYTE $0x24; BYTE $0xd8
+
+	// BYTE $0xcc
+
+	// If g or m are nil, skip Go-related setup.
+	CMPQ	R13, $0    // m
+	JEQ	occlum_nog2
+	CMPQ	R9, $0    // g
+	JEQ	occlum_nog2
+
+	// Initialize m->procid to Linux tid
+	MOVL	$SYS_gettid, AX
+	SYSCALL_ENHANCE
+	MOVQ	AX, m_procid(R13)
+
+	// In child, set up new stack
+	get_tls(CX)
+	MOVQ	R13, g_m(R9)
+	MOVQ	R9, g(CX)
+	CALL	runtime·stackcheck(SB)
+
+occlum_nog2:
+	// Call fn
+	CALL	R12
+
+	// It shouldn't return. If it does, exit that thread.
+	MOVL	$111, DI
+	MOVL	$SYS_exit, AX
+	SYSCALL_ENHANCE
+	JMP	-3(PC)	// keep exiting
+
 TEXT runtime·sigaltstack(SB),NOSPLIT,$-8
 	MOVQ	new+0(FP), DI
 	MOVQ	old+8(FP), SI
 	MOVQ	$SYS_sigaltstack, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	2(PC)
 	MOVL	$0xf1, 0xf1  // crash
@@ -665,7 +766,7 @@ TEXT runtime·settls(SB),NOSPLIT,$32
 	MOVQ	DI, SI
 	MOVQ	$0x1002, DI	// ARCH_SET_FS
 	MOVQ	$SYS_arch_prctl, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	2(PC)
 	MOVL	$0xf1, 0xf1  // crash
@@ -673,7 +774,7 @@ TEXT runtime·settls(SB),NOSPLIT,$32
 
 TEXT runtime·osyield(SB),NOSPLIT,$0
 	MOVL	$SYS_sched_yield, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 TEXT runtime·sched_getaffinity(SB),NOSPLIT,$0
@@ -681,7 +782,7 @@ TEXT runtime·sched_getaffinity(SB),NOSPLIT,$0
 	MOVQ	len+8(FP), SI
 	MOVQ	buf+16(FP), DX
 	MOVL	$SYS_sched_getaffinity, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -689,7 +790,7 @@ TEXT runtime·sched_getaffinity(SB),NOSPLIT,$0
 TEXT runtime·epollcreate(SB),NOSPLIT,$0
 	MOVL    size+0(FP), DI
 	MOVL    $SYS_epoll_create, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+8(FP)
 	RET
 
@@ -697,7 +798,7 @@ TEXT runtime·epollcreate(SB),NOSPLIT,$0
 TEXT runtime·epollcreate1(SB),NOSPLIT,$0
 	MOVL	flags+0(FP), DI
 	MOVL	$SYS_epoll_create1, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+8(FP)
 	RET
 
@@ -708,7 +809,7 @@ TEXT runtime·epollctl(SB),NOSPLIT,$0
 	MOVL	fd+8(FP), DX
 	MOVQ	ev+16(FP), R10
 	MOVL	$SYS_epoll_ctl, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -721,7 +822,7 @@ TEXT runtime·epollwait(SB),NOSPLIT,$0
 	MOVL	timeout+20(FP), R10
 	MOVQ	$0, R8
 	MOVL	$SYS_epoll_pwait, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -731,7 +832,7 @@ TEXT runtime·closeonexec(SB),NOSPLIT,$0
 	MOVQ    $2, SI  // F_SETFD
 	MOVQ    $1, DX  // FD_CLOEXEC
 	MOVL	$SYS_fcntl, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 // func runtime·setNonblock(int32 fd)
@@ -740,13 +841,13 @@ TEXT runtime·setNonblock(SB),NOSPLIT,$0-4
 	MOVQ    $3, SI  // F_GETFL
 	MOVQ    $0, DX
 	MOVL	$SYS_fcntl, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	fd+0(FP), DI // fd
 	MOVQ	$4, SI // F_SETFL
 	MOVQ	$0x800, DX // O_NONBLOCK
 	ORL	AX, DX
 	MOVL	$SYS_fcntl, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	RET
 
 // int access(const char *name, int mode)
@@ -757,7 +858,7 @@ TEXT runtime·access(SB),NOSPLIT,$0
 	MOVL	mode+8(FP), DX
 	MOVL	$0, R10
 	MOVL	$SYS_faccessat, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+16(FP)
 	RET
 
@@ -767,7 +868,7 @@ TEXT runtime·connect(SB),NOSPLIT,$0-28
 	MOVQ	addr+8(FP), SI
 	MOVL	len+16(FP), DX
 	MOVL	$SYS_connect, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+24(FP)
 	RET
 
@@ -777,7 +878,7 @@ TEXT runtime·socket(SB),NOSPLIT,$0-20
 	MOVL	typ+4(FP), SI
 	MOVL	prot+8(FP), DX
 	MOVL	$SYS_socket, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVL	AX, ret+16(FP)
 	RET
 
@@ -786,6 +887,6 @@ TEXT runtime·sbrk0(SB),NOSPLIT,$0-8
 	// Implemented as brk(NULL).
 	MOVQ	$0, DI
 	MOVL	$SYS_brk, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 	MOVQ	AX, ret+0(FP)
 	RET
