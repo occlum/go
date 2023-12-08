@@ -32,7 +32,7 @@ TEXT ·Syscall6<ABIInternal>(SB),NOSPLIT,$0
 	MOVQ	CX, SI  // a2
 	MOVQ	BX, DI  // a1
 	// num already in AX.
-	SYSCALL
+	SYSCALL_ENHANCE
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok
 	NEGQ	AX

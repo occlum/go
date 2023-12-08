@@ -219,6 +219,7 @@ const (
 	_AT_SECURE = 23 // secure mode boolean
 	_AT_RANDOM = 25 // introduced in 2.6.29
 	_AT_HWCAP2 = 26 // hardware capability bit vector 2
+	_AT_OCCLUM = 48 // gnu syscall ABI entry address
 )
 
 var procAuxv = []byte("/proc/self/auxv\x00")
@@ -304,6 +305,10 @@ func sysauxv(auxv []uintptr) int {
 
 		case _AT_SECURE:
 			secureMode = val == 1
+
+		case _AT_OCCLUM:
+			occlumentry = val
+			teeFlag = true
 		}
 
 		archauxv(tag, val)

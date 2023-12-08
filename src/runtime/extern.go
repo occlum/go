@@ -320,3 +320,14 @@ const GOOS string = goos.GOOS
 // GOARCH is the running program's architecture target:
 // one of 386, amd64, arm, s390x, and so on.
 const GOARCH string = goarch.GOARCH
+
+// Variable occlumentry is a flag to distinguish a tee environment or not.
+// occlumentry's value is from Auxv, 0 is default value, nonzero if execution
+// binary was loaded by a tee libos, for example occlum.
+var occlumentry uintptr = 0x0
+var teeFlag = false
+
+// isTeeEnvironment return true if it's in a TEE environment.
+func isTeeEnvironment() bool {
+	return teeFlag
+}
