@@ -608,7 +608,8 @@ func (h *mheap) sysAlloc(n uintptr, hintList **arenaHint, register bool) (v unsa
 	}
 
 	// Try to grow the heap at a hint address.
-	for *hintList != nil {
+	// Skip hintlist address malloc in Tee environment.
+	for !teeFlag && *hintList != nil {
 		hint := *hintList
 		p := hint.addr
 		if hint.down {
