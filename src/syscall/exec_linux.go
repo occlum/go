@@ -172,6 +172,9 @@ type caps struct {
 	data [2]capData
 }
 
+//go:linkname isTeeEnvironment runtime.isTeeEnvironment
+func isTeeEnvironment() bool
+
 // See CAP_TO_INDEX in linux/capability.h:
 func capToIndex(cap uintptr) uintptr { return cap >> 5 }
 
@@ -289,15 +292,24 @@ func forkAndExecInChild1(argv0 *byte, argv, envv []*byte, chroot, dir *byte, att
 	// No more allocation or calls of non-assembly functions.
 	runtime_BeforeFork()
 	locked = true
-	if clone3 != nil {
-		r1, err1 = rawVforkSyscall(_SYS_clone3, uintptr(unsafe.Pointer(clone3)), unsafe.Sizeof(*clone3))
-	} else {
+	// Replace syscall clone with vfork here, vfork needs no parameters,
+	// the giving parameters here will be ignored.
+	// vfork and exec could create a new process in occlum while clone not.
+	if isTeeEnvironment() {
+		const SYS_VFORK = 58
 		flags |= uintptr(SIGCHLD)
-		if runtime.GOARCH == "s390x" {
-			// On Linux/s390, the first two arguments of clone(2) are swapped.
-			r1, err1 = rawVforkSyscall(SYS_CLONE, 0, flags)
+		r1, err1 = rawVforkSyscall(SYS_VFORK, flags, 0)
+	} else {
+		if clone3 != nil {
+			r1, err1 = rawVforkSyscall(_SYS_clone3, uintptr(unsafe.Pointer(clone3)), unsafe.Sizeof(*clone3))
 		} else {
-			r1, err1 = rawVforkSyscall(SYS_CLONE, flags, 0)
+			flags |= uintptr(SIGCHLD)
+			if runtime.GOARCH == "s390x" {
+				// On Linux/s390, the first two arguments of clone(2) are swapped.
+				r1, err1 = rawVforkSyscall(SYS_CLONE, 0, flags)
+			} else {
+				r1, err1 = rawVforkSyscall(SYS_CLONE, flags, 0)
+			}
 		}
 	}
 	if err1 != 0 || r1 != 0 {

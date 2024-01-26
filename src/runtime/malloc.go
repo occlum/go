@@ -608,7 +608,8 @@ func (h *mheap) sysAlloc(n uintptr, hintList **arenaHint, register bool) (v unsa
 	}
 
 	// Try to grow the heap at a hint address.
-	for *hintList != nil {
+	// Skip hintlist address malloc in Tee environment.
+	for !teeFlag && *hintList != nil {
 		hint := *hintList
 		p := hint.addr
 		if hint.down {
@@ -662,13 +663,15 @@ func (h *mheap) sysAlloc(n uintptr, hintList **arenaHint, register bool) (v unsa
 			return nil, 0
 		}
 
-		// Create new hints for extending this region.
-		hint := (*arenaHint)(h.arenaHintAlloc.alloc())
-		hint.addr, hint.down = uintptr(v), true
-		hint.next, mheap_.arenaHints = mheap_.arenaHints, hint
-		hint = (*arenaHint)(h.arenaHintAlloc.alloc())
-		hint.addr = uintptr(v) + size
-		hint.next, mheap_.arenaHints = mheap_.arenaHints, hint
+		if !teeFlag {
+			// Create new hints for extending this region.
+			hint := (*arenaHint)(h.arenaHintAlloc.alloc())
+			hint.addr, hint.down = uintptr(v), true
+			hint.next, mheap_.arenaHints = mheap_.arenaHints, hint
+			hint = (*arenaHint)(h.arenaHintAlloc.alloc())
+			hint.addr = uintptr(v) + size
+			hint.next, mheap_.arenaHints = mheap_.arenaHints, hint
+		}
 	}
 
 	// Check for bad pointers or pointers we can't use.
