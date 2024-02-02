@@ -32,7 +32,13 @@ TEXT ·Syscall6<ABIInternal>(SB),NOSPLIT,$0
 	MOVQ	CX, SI  // a2
 	MOVQ	BX, DI  // a1
 	// num already in AX.
-	SYSCALL_ENHANCE
+	CMPQ runtime·occlumentry(SB), $0x0
+	JBE  10(PC)
+	BYTE $0x48; BYTE $0x8d; BYTE $0x0d; BYTE $0x0c; BYTE $0x00; BYTE $0x00; BYTE $0x00
+	MOVQ runtime·occlumentry(SB), R11
+	JMP  R11
+	SYSCALL
+	PXOR  X15, X15
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	ok
 	NEGQ	AX

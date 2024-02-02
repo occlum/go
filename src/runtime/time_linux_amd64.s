@@ -77,11 +77,11 @@ ret:
 
 fallback:
 	MOVQ	$SYS_clock_gettime, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 
 	MOVL	$1, DI // CLOCK_MONOTONIC
 	LEAQ	0(SP), SI
 	MOVQ	$SYS_clock_gettime, AX
-	SYSCALL
+	SYSCALL_ENHANCE
 
 	JMP	ret

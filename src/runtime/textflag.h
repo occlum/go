@@ -52,4 +52,5 @@
     BYTE $0x48; BYTE $0x8d; BYTE $0x0d; BYTE $0x0c; BYTE $0x00; BYTE $0x00; BYTE $0x00  \
     MOVQ runtime·occlumentry(SB), R11  \
     JMP  R11  \
-    SYSCALL
+    SYSCALL  \
+    PXOR  X15, X15
